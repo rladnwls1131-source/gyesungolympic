@@ -58,7 +58,7 @@
             
             <div class="grid md:grid-cols-2 gap-6">
                 <div>
-                    <canvas id="flag-canvas" width="300" height="200" class="border-2 border-gray-400 rounded-lg mx-auto cursor-pointer"></canvas>
+                    <canvas id="flag-canvas" class="border-2 border-gray-400 rounded-lg mx-auto cursor-pointer w-full aspect-[3/2]"></canvas>
                     <div id="color-palette" class="flex justify-center gap-2 mt-4 flex-wrap"></div>
                 </div>
                 <div class="space-y-3">
@@ -216,18 +216,24 @@
             const canvas = document.getElementById('flag-canvas');
             const ctx = canvas.getContext('2d');
             const paletteContainer = document.getElementById('color-palette');
-
-            const gridSize = 15;
-            const canvasWidth = canvas.width;
-            const canvasHeight = canvas.height;
-            const cellWidth = canvasWidth / gridSize;
-            const cellHeight = canvasHeight / gridSize;
+            
+            const gridSize = 30; // 30x20 격자를 유지
+            const gridRows = 20;
             
             const colors = ['#FFFFFF', '#000000', '#FF3B30', '#FF9500', '#FFCC00', '#4CD964', '#34C759', '#5AC8FA', '#007AFF', '#5856D6', '#AF52DE', '#A2845E', '#8E8E93'];
             let selectedColor = colors[1];
-            appData.flagGrid = Array(gridSize * Math.round(gridSize * (canvasHeight/canvasWidth))).fill(colors[0]);
+            appData.flagGrid = Array(gridSize * gridRows).fill(colors[0]);
 
             function drawGrid() {
+                // 캔버스 크기를 컨테이너에 맞게 동적으로 설정
+                const canvasWidth = canvas.offsetWidth;
+                const canvasHeight = canvas.offsetHeight;
+                canvas.width = canvasWidth;
+                canvas.height = canvasHeight;
+
+                const cellWidth = canvasWidth / gridSize;
+                const cellHeight = canvasHeight / gridRows;
+                
                 ctx.clearRect(0, 0, canvasWidth, canvasHeight);
                 ctx.strokeStyle = '#CCCCCC';
                 for (let i = 0; i < appData.flagGrid.length; i++) {
@@ -261,8 +267,8 @@
                 const x = e.clientX - rect.left;
                 const y = e.clientY - rect.top;
 
-                const col = Math.floor(x / cellWidth);
-                const row = Math.floor(y / cellHeight);
+                const col = Math.floor(x / (canvas.offsetWidth / gridSize));
+                const row = Math.floor(y / (canvas.offsetHeight / gridRows));
 
                 const index = row * gridSize + col;
                 if (index < appData.flagGrid.length) {
@@ -271,8 +277,11 @@
                 }
             });
 
+            // 화면 크기 변경에 맞춰 캔버스 크기를 다시 계산
+            window.addEventListener('resize', drawGrid);
+            
             createPalette();
-            drawGrid();
+            drawGrid(); // 초기 실행
         });
     </script>
 </body>
