@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>올림픽 국기와 구호 만들기</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chosen Palette: Warm Meadow -->
+    <!-- Application Structure Plan: 학습지의 단계별 흐름을 그대로 따르는 마법사(wizard) 형태의 단일 페이지 애플리케이션으로 설계했습니다. '팀 정보 입력 -> 개인 디자인 -> 팀 활동 -> 발표 준비 -> 최종 결과 확인' 순서로 진행됩니다. 이 선형적인 구조는 초등학생들이 정해진 수업 시간 안에 각 단계의 과제에 집중하고, 활동의 흐름을 놓치지 않도록 돕기 때문에 가장 효과적이라고 판단했습니다. 정적인 학습지를 동적인 디지털 경험으로 전환하여 학생들의 참여와 흥미를 높이는 것을 목표로 합니다. -->
+    <!-- Visualization & Content Choices: '국기 그리기' 활동(정보) -> 목표: 학생의 창의적 표현 -> 시각화: 간단한 픽셀 아트 캔버스 편집기 -> 상호작용: 색상 팔레트에서 색을 고르고 캔버스의 칸을 클릭하여 채색 -> 정당성: 단순 텍스트 입력보다 훨씬 높은 몰입감을 제공하면서도, 복잡한 그림 라이브러리 없이 4학년 학생들이 쉽게 사용할 수 있습니다. 이 외 텍스트 정보는 표준 HTML 입력 양식을 사용해 학생들이 쉽게 내용을 기록하고, 마지막에 모든 결과가 동적으로 종합되어 나타나도록 구성했습니다. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Pretendard', sans-serif;
+        }
+        .step-screen {
+            display: none;
+        }
+        .active-screen {
+            display: block;
+        }
+        .color-palette div {
+            transition: transform 0.1s ease-in-out;
+        }
+        .color-palette div.selected {
+            transform: scale(1.2);
+            border: 3px solid #0d9488;
+        }
+    </style>
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+</head>
+<body class="bg-amber-50 text-gray-800 flex items-center justify-center min-h-screen p-4">
+
+    <div class="w-full max-w-3xl bg-white rounded-2xl shadow-lg p-6 md:p-10 mx-auto">
+
+        <div id="screen-start" class="step-screen active-screen text-center">
+            <h1 class="text-3xl md:text-4xl font-bold text-teal-800 mb-2">🥇 올림픽 국기와 구호 만들기 🥇</h1>
+            <p class="text-gray-600 mb-6">우리 팀만의 멋진 국기와 구호를 만들 준비가 되었나요?</p>
+            <div class="space-y-4 text-left">
+                <div>
+                    <label for="team-name" class="block text-lg font-semibold text-gray-700 mb-1">모둠(팀) 이름:</label>
+                    <input type="text" id="team-name" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500" placeholder="예) 꿈을 향한 불꽃">
+                </div>
+                <div>
+                    <label for="team-pledge" class="block text-lg font-semibold text-gray-700 mb-1">우리 모둠의 다짐:</label>
+                    <input type="text" id="team-pledge" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500" placeholder="예) 힘을 합쳐 최고의 작품을 만들자!">
+                </div>
+            </div>
+            <button onclick="navigate('screen-step1')" class="mt-8 w-full bg-teal-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-teal-700 transition-colors text-xl">시작하기!</button>
+        </div>
+
+        <div id="screen-step1" class="step-screen">
+            <h2 class="text-2xl md:text-3xl font-bold text-teal-800 mb-4">1단계: 나만의 국기 디자인하기 <span class="text-lg font-normal text-gray-500">(20분)</span></h2>
+            <div class="bg-amber-100/50 p-4 rounded-lg mb-6">
+                <p class="font-semibold text-teal-900">🎨 나만의 국기를 자유롭게 그려보고, 그 의미를 설명해주세요.</p>
+                <p class="text-sm text-gray-600 mt-1">아래 팔레트에서 색을 선택하고, 네모 칸을 클릭해서 국기를 디자인해보세요!</p>
+            </div>
+            
+            <div class="grid md:grid-cols-2 gap-6">
+                <div>
+                    <canvas id="flag-canvas" width="300" height="200" class="border-2 border-gray-400 rounded-lg mx-auto cursor-pointer"></canvas>
+                    <div id="color-palette" class="flex justify-center gap-2 mt-4 flex-wrap"></div>
+                </div>
+                <div class="space-y-3">
+                    <div>
+                        <label class="block font-semibold text-gray-700">색깔의 의미:</label>
+                        <textarea id="meaning-color" rows="2" class="w-full p-2 border border-gray-300 rounded-lg" placeholder="빨간색은 열정, 파란색은 희망을 뜻해요."></textarea>
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-gray-700">모양의 의미:</label>
+                        <textarea id="meaning-shape" rows="2" class="w-full p-2 border border-gray-300 rounded-lg" placeholder="가운데 동그라미는 우리 팀의 단결을 상징해요."></textarea>
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-gray-700">전체적인 의미:</label>
+                        <textarea id="meaning-overall" rows="2" class="w-full p-2 border border-gray-300 rounded-lg" placeholder="우리 팀의 열정과 희망으로 목표를 이루자는 뜻이에요."></textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="flex justify-between mt-8">
+                <button onclick="navigate('screen-start')" class="bg-gray-300 text-gray-800 font-bold py-2 px-6 rounded-lg hover:bg-gray-400 transition-colors">이전</button>
+                <button onclick="navigate('screen-step2')" class="bg-teal-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-teal-700 transition-colors">다음 단계로</button>
+            </div>
+        </div>
+
+        <div id="screen-step2" class="step-screen">
+            <h2 class="text-2xl md:text-3xl font-bold text-teal-800 mb-4">2단계: 우리 팀 국기와 구호 완성하기 <span class="text-lg font-normal text-gray-500">(50분)</span></h2>
+            <div class="space-y-6">
+                <div class="bg-blue-100/50 p-4 rounded-lg">
+                    <p class="font-semibold text-blue-900">1. 팀원들과 각자 디자인한 국기를 공유하고, 투표로 우리 팀 대표 디자인을 뽑아주세요.</p>
+                </div>
+                <div class="bg-green-100/50 p-4 rounded-lg">
+                     <p class="font-semibold text-green-900">2. 뽑힌 디자인을 바탕으로, 팀원들의 좋은 아이디어를 더해 큰 도화지에 우리 팀의 공식 국기를 함께 만들어보세요.</p>
+                     <p class="mt-2 p-3 bg-white rounded-md text-sm">✨ <span class="font-bold">중요해요!</span><br> 내 디자인이 뽑히지 않았더라도 서운해하지 말아요. 친구의 좋은 생각에 내 아이디어를 더해서 힘을 합치면 훨씬 더 멋진 작품이 탄생할 거예요!</p>
+                </div>
+                 <div class="bg-orange-100/50 p-4 rounded-lg">
+                    <p class="font-semibold text-orange-900">3. 완성된 국기와 어울리는, 힘이 불끈 솟는 우리 팀의 구호를 만들어 보세요.</p>
+                    <textarea id="team-slogan" rows="3" class="w-full mt-2 p-2 border border-gray-300 rounded-lg" placeholder="우리 팀의 구호를 여기에 입력하세요!"></textarea>
+                </div>
+            </div>
+             <div class="flex justify-between mt-8">
+                <button onclick="navigate('screen-step1')" class="bg-gray-300 text-gray-800 font-bold py-2 px-6 rounded-lg hover:bg-gray-400 transition-colors">이전</button>
+                <button onclick="navigate('screen-step3')" class="bg-teal-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-teal-700 transition-colors">다음 단계로</button>
+            </div>
+        </div>
+
+        <div id="screen-step3" class="step-screen">
+             <h2 class="text-2xl md:text-3xl font-bold text-teal-800 mb-4">3단계: 발표 준비하기 <span class="text-lg font-normal text-gray-500">(10분)</span></h2>
+             <p class="text-gray-600 mb-6">아래 질문에 답하면서 친구들 앞에서 발표할 내용을 정리해 보세요.</p>
+             <div class="space-y-4">
+                 <div>
+                     <label for="prep-name" class="block text-lg font-semibold text-gray-700">1. 우리 팀의 이름과 그 뜻은 무엇인가요?</label>
+                     <textarea id="prep-name" rows="3" class="mt-1 w-full p-2 border border-gray-300 rounded-lg"></textarea>
+                 </div>
+                 <div>
+                     <label for="prep-flag" class="block text-lg font-semibold text-gray-700">2. 우리 팀 국기에 담긴 특별한 의미는 무엇인가요? (색, 모양 등)</label>
+                     <textarea id="prep-flag" rows="4" class="mt-1 w-full p-2 border border-gray-300 rounded-lg"></textarea>
+                 </div>
+                 <div>
+                    <p class="block text-lg font-semibold text-gray-700">3. 우리 팀 구호를 외치며 발표를 멋지게 마무리해 보세요!</p>
+                    <p class="mt-1 p-3 bg-gray-100 rounded-lg text-gray-800 font-semibold" id="prep-slogan-display">구호는 2단계에서 입력한 내용이 표시됩니다.</p>
+                </div>
+             </div>
+             <div class="flex justify-between mt-8">
+                <button onclick="navigate('screen-step2')" class="bg-gray-300 text-gray-800 font-bold py-2 px-6 rounded-lg hover:bg-gray-400 transition-colors">이전</button>
+                <button onclick="navigate('screen-final')" class="bg-teal-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-teal-700 transition-colors">결과 확인하기</button>
+            </div>
+        </div>
+
+        <div id="screen-final" class="step-screen text-center">
+            <h2 class="text-3xl md:text-4xl font-bold text-teal-800 mb-4">✨ 우리 팀 결과물 ✨</h2>
+            <p class="text-gray-600 mb-6">정말 멋진 국기와 구호가 완성되었어요! 모두 수고 많았습니다!</p>
+            <div class="bg-white border-2 border-teal-500 rounded-lg p-6 text-left space-y-4">
+                <p><strong>- 팀 이름:</strong> <span id="final-team-name"></span></p>
+                <p><strong>- 팀 다짐:</strong> <span id="final-team-pledge"></span></p>
+                <p><strong>- 팀 구호:</strong> <span id="final-team-slogan" class="font-bold text-lg text-orange-600"></span></p>
+                <div>
+                    <p><strong>- 발표 내용 요약:</strong></p>
+                    <div class="mt-2 p-4 bg-gray-50 rounded-md border text-sm space-y-2">
+                        <p><strong>이름의 뜻:</strong> <span id="final-prep-name"></span></p>
+                        <p><strong>국기의 의미:</strong> <span id="final-prep-flag"></span></p>
+                    </div>
+                </div>
+            </div>
+             <div class="flex justify-center mt-8 space-x-4">
+                <button onclick="navigate('screen-step3')" class="bg-gray-300 text-gray-800 font-bold py-2 px-6 rounded-lg hover:bg-gray-400 transition-colors">다시 수정하기</button>
+                <button onclick="window.print()" class="bg-teal-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-teal-700 transition-colors">인쇄하기</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const appData = {
+            teamName: '',
+            teamPledge: '',
+            flagMeaning: {
+                color: '',
+                shape: '',
+                overall: ''
+            },
+            teamSlogan: '',
+            presentation: {
+                name: '',
+                flag: ''
+            },
+            flagGrid: []
+        };
+        
+        const screens = document.querySelectorAll('.step-screen');
+        let currentScreen = 'screen-start';
+
+        function saveData() {
+            appData.teamName = document.getElementById('team-name').value;
+            appData.teamPledge = document.getElementById('team-pledge').value;
+            appData.flagMeaning.color = document.getElementById('meaning-color').value;
+            appData.flagMeaning.shape = document.getElementById('meaning-shape').value;
+            appData.flagMeaning.overall = document.getElementById('meaning-overall').value;
+            appData.teamSlogan = document.getElementById('team-slogan').value;
+            appData.presentation.name = document.getElementById('prep-name').value;
+            appData.presentation.flag = document.getElementById('prep-flag').value;
+        }
+
+        function populateFinalScreen() {
+            document.getElementById('final-team-name').textContent = appData.teamName || '입력되지 않음';
+            document.getElementById('final-team-pledge').textContent = appData.teamPledge || '입력되지 않음';
+            document.getElementById('final-team-slogan').textContent = appData.teamSlogan || '입력되지 않음';
+            document.getElementById('final-prep-name').textContent = appData.presentation.name || '입력되지 않음';
+            document.getElementById('final-prep-flag').textContent = appData.presentation.flag || '입력되지 않음';
+        }
+
+        function navigate(screenId) {
+            saveData();
+
+            if (screenId === 'screen-step3') {
+                document.getElementById('prep-slogan-display').textContent = appData.teamSlogan || '2단계에서 구호를 먼저 입력해주세요!';
+            }
+            
+            if (screenId === 'screen-final') {
+                populateFinalScreen();
+            }
+
+            const currentScreenElement = document.getElementById(currentScreen);
+            if (currentScreenElement) {
+                currentScreenElement.classList.remove('active-screen');
+            }
+            
+            const nextScreenElement = document.getElementById(screenId);
+            if (nextScreenElement) {
+                nextScreenElement.classList.add('active-screen');
+            }
+            
+            currentScreen = screenId;
+            window.scrollTo(0, 0);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const canvas = document.getElementById('flag-canvas');
+            const ctx = canvas.getContext('2d');
+            const paletteContainer = document.getElementById('color-palette');
+
+            const gridSize = 15;
+            const canvasWidth = canvas.width;
+            const canvasHeight = canvas.height;
+            const cellWidth = canvasWidth / gridSize;
+            const cellHeight = canvasHeight / gridSize;
+            
+            const colors = ['#FFFFFF', '#000000', '#FF3B30', '#FF9500', '#FFCC00', '#4CD964', '#34C759', '#5AC8FA', '#007AFF', '#5856D6', '#AF52DE', '#A2845E', '#8E8E93'];
+            let selectedColor = colors[1];
+            appData.flagGrid = Array(gridSize * Math.round(gridSize * (canvasHeight/canvasWidth))).fill(colors[0]);
+
+            function drawGrid() {
+                ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+                ctx.strokeStyle = '#CCCCCC';
+                for (let i = 0; i < appData.flagGrid.length; i++) {
+                    const x = (i % gridSize) * cellWidth;
+                    const y = Math.floor(i / gridSize) * cellHeight;
+                    ctx.fillStyle = appData.flagGrid[i];
+                    ctx.fillRect(x, y, cellWidth, cellHeight);
+                    ctx.strokeRect(x, y, cellWidth, cellHeight);
+                }
+            }
+            
+            function createPalette() {
+                colors.forEach(color => {
+                    const colorDiv = document.createElement('div');
+                    colorDiv.style.backgroundColor = color;
+                    colorDiv.className = 'w-8 h-8 rounded-full cursor-pointer border-2 border-gray-300';
+                    if (color === selectedColor) {
+                        colorDiv.classList.add('selected');
+                    }
+                    colorDiv.addEventListener('click', () => {
+                        selectedColor = color;
+                        document.querySelectorAll('#color-palette div').forEach(d => d.classList.remove('selected'));
+                        colorDiv.classList.add('selected');
+                    });
+                    paletteContainer.appendChild(colorDiv);
+                });
+            }
+
+            canvas.addEventListener('click', (e) => {
+                const rect = canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+
+                const col = Math.floor(x / cellWidth);
+                const row = Math.floor(y / cellHeight);
+
+                const index = row * gridSize + col;
+                if (index < appData.flagGrid.length) {
+                    appData.flagGrid[index] = selectedColor;
+                    drawGrid();
+                }
+            });
+
+            createPalette();
+            drawGrid();
+        });
+    </script>
+</body>
+</html>
